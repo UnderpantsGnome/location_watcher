@@ -1,0 +1,18 @@
+# examples of how you would edit this file for your setup
+# if you had 3 networks you wanted to watch you would setup like this
+#
+# LOCATIONS=(office home george)
+# SSIDS=(WorkSSID homeSSID georgeSSID)
+# EN0IPS=(192.168. 10.0.0. )
+# EN1IPS=(192.168. 10.0.0. )
+# 
+# if you are always on wireless you can leave the EN_IPS empty
+# 
+
+LOCATIONS=()
+SSIDS=()
+EN0IPS=()
+EN1IPS=()
+
+# set this to anything other than "true" to silence the script
+USE_NOTIFICATIONS="true"

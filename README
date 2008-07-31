@@ -1,0 +1,40 @@
+h2. What is this?
+
+location_watcher is a launchd controlled network location watcher
+
+h2. What does it do?
+
+It watches your network settings and if they change it looks to see if there is a script that should be run for this particular location.
+
+I'm using it because in the office I have servers that are accessible both internally and externally, but since they are on different IPs based on inside and outside and they are using virtual hosts. So instead of having to use different host name, which I was doing initially, I can have this update my hosts file or anything else I want on a network change.
+
+h2. How do I use it?
+
+You can clone the repository
+
+<pre><code>
+git clone git://github.com/UnderpantsGnome/location_watcher.git
+</code></pre>
+
+or you can download the zip from "UnderpantsGnome":http://underpantsgnome.com/wp-content/uploads/location_watcher.zip
+
+When you have the files, run ./install from the directory and you are all set.
+
+h2. How do I configure it?
+
+The following configuration would run the script in LOCATIONS for the matching SSID, EN0IP or EN1IP when the network changes. 
+
+So if you are on the WorkSSID wireless network it will execute ~/bin/location_watcher/office and so on. It trys to find the network in the following order SSID, EN0IP, EN1IP.
+
+<pre><code>
+LOCATIONS=(office home george)
+SSIDS=(WorkSSID homeSSID georgeSSID)
+EN0IPS=(192.168. 10.0.0. )
+EN1IPS=(192.168. 10.0.0. )
+</pre></code>
+
+You can also silence the notifications with 
+
+USE_NOTIFICATIONS="false"
+
+By default it will use growlnotify to tell you what it is doing, it will fall back to using Finder alerts if it can't find growlnotify. Trust me, you are either going to want to install growlnotify or turn off notifications, the Finder alerts are annoying.
