@@ -6,7 +6,7 @@ h2. What does it do?
 
 It watches your network settings and if they change it looks to see if there is a script that should be run for this particular location.
 
-I'm using it because in the office I have servers that are accessible both internally and externally, but since they are on different IPs based on inside and outside and they are using virtual hosts. So instead of having to use different host name, which I was doing initially, I can have this update my hosts file or anything else I want on a network change.
+I'm using it because in the office I have servers that are accessible both internally and externally, but since they are on different IPs based on inside and outside and they are using virtual hosts it was a hassle. So instead of having to use different host names based on where I was, which I was doing initially, I can have this update my hosts file or anything else I want on a network change.
 
 h2. How do I use it?
 
@@ -35,6 +35,8 @@ EN1IPS=(192.168. 10.0.0. )
 
 You can also silence the notifications with 
 
+<pre><code>
 USE_NOTIFICATIONS="false"
+</pre></code>
 
 By default it will use growlnotify to tell you what it is doing, it will fall back to using Finder alerts if it can't find growlnotify. Trust me, you are either going to want to install growlnotify or turn off notifications, the Finder alerts are annoying.

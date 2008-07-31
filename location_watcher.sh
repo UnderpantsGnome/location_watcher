@@ -5,14 +5,15 @@
 # url: http://tech.inhelsinki.nl/locationchanger/
 # version: 0.4
 #
-# 2008-07-31 UnderpantsGnome
-#   moved all the execution to external files
+# 2008-07-31 UnderpantsGnome (Michael Moen)
+# url: http://github.com/UnderpantsGnome/location_watcher/wikis
 #   modified to call external scripts based on the location
 #   Made it easier to handle multiple locations
 #   made it read a config file in ~/.location_watcher
+#   added notifications or logging of activity/errors based on the config
 
 # redirect all IO to /dev/null (comment this out if you want to debug)
-# exec 1>/dev/null 2>/dev/null
+exec 1>/dev/null 2>/dev/null
 
 # get a little breather before we get data for things to settle down
 sleep 3
@@ -34,42 +35,51 @@ EN1IPS=()
 . HOME_DIR/.location_watcher
 
 message() {
-  if [ "true" = "$USE_NOTIFICATIONS" ]; then
+  if [ "true" = "${USE_NOTIFICATIONS}" ]; then
     if [ -e GROWL_PATH ]; then
       GROWL_PATH -p ${2} -m "${1}" location_watcher ${3}
     else
       osascript -l AppleScript -e "tell Application \"Finder\" to display alert \"location_watcher $1\"" 
     fi
+  else 
+    log "${1}"
   fi
 }
 
+log() {
+  echo "${1}" >> HOME_DIR/.location_watcher.log
+}
+
 for (( i = 0 ; i < ${#LOCATIONS[@]} ; i++ )); do
-  if [ "$SSID" = "${SSIDS[$i]}" ]; then
-    REASON=$SSID
+  if [ "${SSID}" = "${SSIDS[$i]}" ]; then
+    REASON=${SSID}
     LOCATION=${LOCATIONS[$i]}
     break
   fi
 
-  if [ "$EN0IP" ! -e "" && "$EN0IP" = "${EN0IPS[$i]}" ]; then
-    REASON=$EN0IP
+  if [ "${EN0IP}" != "" && "${EN0IP}" = "${EN0IPS[$i]}" ]; then
+    REASON=${EN0IP}
     LOCATION=${LOCATIONS[$i]}
     break
   fi
 
-  if [ "$EN1IP" ! -e "" && "$EN1IP" = "${EN1IPS[$i]}" ]; then
-    REASON=$EN1IP
+  if [ "${EN1IP}" != "" && "${EN1IP}" = "${EN1IPS[$i]}" ]; then
+    REASON=${EN1IP}
     LOCATION=${LOCATIONS[$i]}
     break
   fi
 done
 
-if [ $LOCATION ]; then
+if [ ${LOCATION} ]; then
   SCRIPT="HOME_DIR/bin/location_watcher/${LOCATION}"
+  touch HOME_DIR/.location_watcher.last
+  LAST=`cat HOME_DIR/.location_watcher.last`
 
   if [ -f "${SCRIPT}" ]; then
     if [ -x "${SCRIPT}" ]; then
       $SCRIPT
       message "executed ${SCRIPT}" 1
+      echo ${LOCATION} > HOME_DIR/.location_watcher.last
     else
       message "${SCRIPT} exists, but it not executable" 2 -s
     fi
@@ -78,6 +88,5 @@ if [ $LOCATION ]; then
   fi
 fi
 
-# do some stuff here that needs to happen after every network change
-echo `date` "Location: $LOCATION - $REASON" >> HOME_DIR/.locationchanger.log
+log "`date` Location: ${LOCATION} - ${REASON}"
 exit 0
