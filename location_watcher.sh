@@ -13,10 +13,10 @@
 #   added notifications or logging of activity/errors based on the config
 
 # redirect all IO to /dev/null (comment this out if you want to debug)
-# exec 1>/dev/null 2>/dev/null
+exec 1>/dev/null 2>/dev/null
 
 # get a little breather before we get data for things to settle down
-# sleep 3
+sleep 1
 
 # get various system information
 SSID=`/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -I\
