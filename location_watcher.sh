@@ -13,10 +13,10 @@
 #   added notifications or logging of activity/errors based on the config
 
 # redirect all IO to /dev/null (comment this out if you want to debug)
-exec 1>/dev/null 2>/dev/null
+# exec 1>/dev/null 2>/dev/null
 
 # get a little breather before we get data for things to settle down
-sleep 3
+# sleep 3
 
 # get various system information
 SSID=`/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -I\
@@ -57,13 +57,13 @@ for (( i = 0 ; i < ${#LOCATIONS[@]} ; i++ )); do
     break
   fi
 
-  if [ "${EN0IP}" != "" && "${EN0IP}" = "${EN0IPS[$i]}" ]; then
+  if [[ ("${EN0IP}" != "") && ("${EN0IP}" = "${EN0IPS[$i]}") ]]; then
     REASON=${EN0IP}
     LOCATION=${LOCATIONS[$i]}
     break
   fi
 
-  if [ "${EN1IP}" != "" && "${EN1IP}" = "${EN1IPS[$i]}" ]; then
+  if [[ ("${EN1IP}" != "") && ("${EN1IP}" = "${EN1IPS[$i]}") ]]; then
     REASON=${EN1IP}
     LOCATION=${LOCATIONS[$i]}
     break
@@ -75,18 +75,20 @@ if [ ${LOCATION} ]; then
   touch HOME_DIR/.location_watcher.last
   LAST=`cat HOME_DIR/.location_watcher.last`
 
-  if [ -f "${SCRIPT}" ]; then
-    if [ -x "${SCRIPT}" ]; then
-      $SCRIPT
-      message "executed ${SCRIPT}" 1
-      echo ${LOCATION} > HOME_DIR/.location_watcher.last
+  if [ "${LOCATION}" != "${LAST}" ]; then
+    if [ -f "${SCRIPT}" ]; then
+      if [ -x "${SCRIPT}" ]; then
+        $SCRIPT
+        message "executed ${SCRIPT}" 1
+        log "`date` Location: ${LOCATION} - ${REASON}"
+        echo ${LOCATION} > HOME_DIR/.location_watcher.last
+      else
+        message "${SCRIPT} exists, but it not executable" 2 -s
+      fi
     else
-      message "${SCRIPT} exists, but it not executable" 2 -s
+      message "failed, ununable to find script, ${SCRIPT}" 2 -s
     fi
-  else
-    message "failed, ununable to find script, ${SCRIPT}" 2 -s
   fi
 fi
 
-log "`date` Location: ${LOCATION} - ${REASON}"
 exit 0
