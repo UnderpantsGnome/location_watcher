@@ -16,7 +16,7 @@
 exec 1>/dev/null 2>/dev/null
 
 # get a little breather before we get data for things to settle down
-sleep 1
+sleep 3
 
 # get various system information
 SSID=`/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -I\
@@ -72,10 +72,20 @@ done
 
 if [ ${LOCATION} ]; then
   SCRIPT="HOME_DIR/bin/location_watcher/${LOCATION}"
+  COMMON_SCRIPT="HOME_DIR/bin/location_watcher/common"
   touch HOME_DIR/.location_watcher.last
   LAST=`cat HOME_DIR/.location_watcher.last`
 
   if [ "${LOCATION}" != "${LAST}" ]; then
+    if [ -f "${COMMON_SCRIPT}" ]; then
+      if [ -x "${COMMON_SCRIPT}" ]; then
+        $COMMON_SCRIPT
+        message "executed ${COMMON_SCRIPT}" 1
+      else
+        message "${COMMON_SCRIPT} exists, but it not executable" 2 -s
+      fi
+    fi
+
     if [ -f "${SCRIPT}" ]; then
       if [ -x "${SCRIPT}" ]; then
         $SCRIPT

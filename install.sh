@@ -14,6 +14,13 @@ if [ ! -e "${HOME}/Library/LaunchAgents" ]; then
   mkdir -p ~/Library/LaunchAgents
 fi
 
+if [ ! -e "${HOME}/bin/location_watcher/common" ]; then
+  echo "creating ~/bin/location_watcher/common"
+  echo "#!/bin/bash" > ~/bin/location_watcher/common
+  chmod u+x ~/bin/location_watcher/common
+  chown ${SUDO_USER} ~/bin/location_watcher/common
+fi
+
 # take ownership of the file
 sudo chown ${USER}:wheel ~/Library/LaunchAgents/com.underpantsgnome.location_watcher.plist
 
