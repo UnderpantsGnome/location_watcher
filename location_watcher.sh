@@ -15,90 +15,96 @@
 # redirect all IO to /dev/null (comment this out if you want to debug)
 exec 1>/dev/null 2>/dev/null
 
-# get a little breather before we get data for things to settle down
-sleep 3
+LOCK_FILE="HOME_DIR/.location_watcher.lock"
 
-# get various system information
-SSID=`/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -I\
- | grep ' SSID:' | cut -d ':' -f 2 | tr -d ' '`
-EN0IP=`ifconfig en0 | grep 'inet ' | cut -d' ' -f 2`
-EN1IP=`ifconfig en1 | grep 'inet ' | cut -d' ' -f 2`
+if [ ! -e ${LOCK_FILE} ]; then
+  touch ${LOCK_FILE}
+  # get a little breather before we get data for things to settle down
+  sleep 3
 
-LOCATION='default'
-USE_NOTIFICATIONS="true"
+  # get various system information
+  SSID=`/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -I\
+   | grep ' SSID:' | cut -d ':' -f 2 | tr -d ' '`
+  EN0IP=`ifconfig en0 | grep 'inet ' | cut -d' ' -f 2`
+  EN1IP=`ifconfig en1 | grep 'inet ' | cut -d' ' -f 2`
 
-LOCATIONS=()
-SSIDS=()
-EN0IPS=()
-EN1IPS=()
+  LOCATION='default'
+  USE_NOTIFICATIONS="true"
 
-. HOME_DIR/.location_watcher
+  LOCATIONS=()
+  SSIDS=()
+  EN0IPS=()
+  EN1IPS=()
 
-message() {
-  if [ "true" = "${USE_NOTIFICATIONS}" ]; then
-    if [ -e GROWL_PATH ]; then
-      GROWL_PATH -p ${2} -m "${1}" location_watcher ${3}
-    else
-      osascript -l AppleScript -e "tell Application \"Finder\" to display alert \"location_watcher $1\"" 
-    fi
-  else 
-    log "${1}"
-  fi
-}
+  . HOME_DIR/.location_watcher
 
-log() {
-  echo "${1}" >> HOME_DIR/.location_watcher.log
-}
-
-for (( i = 0 ; i < ${#LOCATIONS[@]} ; i++ )); do
-  if [ "${SSID}" = "${SSIDS[$i]}" ]; then
-    REASON=${SSID}
-    LOCATION=${LOCATIONS[$i]}
-    break
-  fi
-
-  if [[ ("${EN0IP}" != "") && ("${EN0IP}" = "${EN0IPS[$i]}") ]]; then
-    REASON=${EN0IP}
-    LOCATION=${LOCATIONS[$i]}
-    break
-  fi
-
-  if [[ ("${EN1IP}" != "") && ("${EN1IP}" = "${EN1IPS[$i]}") ]]; then
-    REASON=${EN1IP}
-    LOCATION=${LOCATIONS[$i]}
-    break
-  fi
-done
-
-if [ ${LOCATION} ]; then
-  SCRIPT="HOME_DIR/bin/location_watcher/${LOCATION}"
-  COMMON_SCRIPT="HOME_DIR/bin/location_watcher/common"
-  touch HOME_DIR/.location_watcher.last
-  LAST=`cat HOME_DIR/.location_watcher.last`
-
-  if [ "${LOCATION}" != "${LAST}" ]; then
-    if [ -f "${COMMON_SCRIPT}" ]; then
-      if [ -x "${COMMON_SCRIPT}" ]; then
-        $COMMON_SCRIPT
-        message "executed ${COMMON_SCRIPT}" 1
+  message() {
+    if [ "true" = "${USE_NOTIFICATIONS}" ]; then
+      if [ -e GROWL_PATH ]; then
+        GROWL_PATH -p ${2} -m "${1}" location_watcher ${3}
       else
-        message "${COMMON_SCRIPT} exists, but it not executable" 2 -s
+        osascript -l AppleScript -e "tell Application \"Finder\" to display alert \"location_watcher $1\"" 
+      fi
+    else 
+      log "${1}"
+    fi
+  }
+
+  log() {
+    echo "${1}" >> HOME_DIR/.location_watcher.log
+  }
+
+  for (( i = 0 ; i < ${#LOCATIONS[@]} ; i++ )); do
+    if [ "${SSID}" = "${SSIDS[$i]}" ]; then
+      REASON=${SSID}
+      LOCATION=${LOCATIONS[$i]}
+      break
+    fi
+
+    if [[ ("${EN0IP}" != "") && ("${EN0IP}" = "${EN0IPS[$i]}") ]]; then
+      REASON=${EN0IP}
+      LOCATION=${LOCATIONS[$i]}
+      break
+    fi
+
+    if [[ ("${EN1IP}" != "") && ("${EN1IP}" = "${EN1IPS[$i]}") ]]; then
+      REASON=${EN1IP}
+      LOCATION=${LOCATIONS[$i]}
+      break
+    fi
+  done
+
+  if [ ${LOCATION} ]; then
+    SCRIPT="HOME_DIR/bin/location_watcher/${LOCATION}"
+    COMMON_SCRIPT="HOME_DIR/bin/location_watcher/common"
+    touch HOME_DIR/.location_watcher.last
+    LAST=`cat HOME_DIR/.location_watcher.last`
+
+    if [ "${LOCATION}" != "${LAST}" ]; then
+      if [ -f "${COMMON_SCRIPT}" ]; then
+        if [ -x "${COMMON_SCRIPT}" ]; then
+          $COMMON_SCRIPT
+          # message "executed ${COMMON_SCRIPT}" 1
+        else
+          message "${COMMON_SCRIPT} exists, but it not executable" 2 -s
+        fi
+      fi
+
+      if [ -f "${SCRIPT}" ]; then
+        if [ -x "${SCRIPT}" ]; then
+          $SCRIPT
+          message "executed ${SCRIPT}" 1
+          log "`date` Location: ${LOCATION} - ${REASON}"
+          echo ${LOCATION} > HOME_DIR/.location_watcher.last
+        else
+          message "${SCRIPT} exists, but it not executable" 2 -s
+        fi
+      else
+        message "failed, ununable to find script, ${SCRIPT}" 2 -s
       fi
     fi
-
-    if [ -f "${SCRIPT}" ]; then
-      if [ -x "${SCRIPT}" ]; then
-        $SCRIPT
-        message "executed ${SCRIPT}" 1
-        log "`date` Location: ${LOCATION} - ${REASON}"
-        echo ${LOCATION} > HOME_DIR/.location_watcher.last
-      else
-        message "${SCRIPT} exists, but it not executable" 2 -s
-      fi
-    else
-      message "failed, ununable to find script, ${SCRIPT}" 2 -s
-    fi
   fi
+  
+  rm ${LOCK_FILE}
 fi
-
 exit 0
